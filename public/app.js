@@ -279,7 +279,7 @@ function renderRouterDiscovery(info = state.network) {
   const title = $('#router-discovery strong');
   if (!detail || !link || !title) return;
   if (info?.gateway) {
-    title.textContent = 'Router detectado';
+    title.textContent = info.routerVendor ? `${info.routerVendor} detectado` : 'Router detectado';
     detail.textContent = `Gateway ${info.gateway}${info.routerMac ? ` · MAC ${info.routerMac}` : ''}`;
     link.href = info.adminUrl || `http://${info.gateway}`;
     link.hidden = false;
@@ -313,7 +313,7 @@ async function applyChannel() {
     showToast(`Canal ${selected} aplicado correctamente`);
   } catch (error) {
     if (error.details?.code === 'ROUTER_CONTROL_REQUIRED') {
-      renderRouterDiscovery({ gateway: error.details.gateway, routerMac: error.details.routerMac, adminUrl: error.details.adminUrl });
+      renderRouterDiscovery({ gateway: error.details.gateway, routerMac: error.details.routerMac, routerVendor: error.details.routerVendor, adminUrl: error.details.adminUrl });
       const gateway = error.details.gateway ? ` Router detectado en ${error.details.gateway}.` : '';
       showToast(`El canal se cambia en el router, no en Windows.${gateway}`);
     } else {

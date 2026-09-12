@@ -115,6 +115,21 @@ async function getGateway() {
   } catch { return null; }
 }
 
+async function getRouterHints() {
+  try {
+    const output = cleanText(await runLocalCommand('ipconfig', ['/all'], 8000));
+    const suffixes = [...output.matchAll(/(?:sufijo dns especifico para la conexion|connection-specific dns suffix)\s*:\s*([^\s\r\n]+)/gi)].map(match => match[1]);
+    const dnsSuffix = suffixes.find(value => value && value !== 'none') || null;
+    const vendors = [
+      ['tendawifi', 'Tenda'], ['tp-link', 'TP-Link'], ['tplink', 'TP-Link'], ['asus', 'ASUS'],
+      ['mikrotik', 'MikroTik'], ['unifi', 'Ubiquiti / UniFi'], ['huawei', 'Huawei'],
+      ['zte', 'ZTE'], ['movistar', 'Movistar'], ['claro', 'Claro']
+    ];
+    const vendor = vendors.find(([needle]) => String(dnsSuffix || '').includes(needle))?.[1] || null;
+    return { dnsSuffix, vendor };
+  } catch { return { dnsSuffix: null, vendor: null }; }
+}
+
 async function getRouterMac(gateway) {
   if (!gateway) return null;
   try {
@@ -133,7 +148,7 @@ async function getPing() {
 }
 
 async function getWindowsStatus() {
-  const [wifi, ping, gateway] = await Promise.all([getWindowsInterface(), getPing(), getGateway()]);
+  const [wifi, ping, gateway, routerHints] = await Promise.all([getWindowsInterface(), getPing(), getGateway(), getRouterHints()]);
   const routerMac = await getRouterMac(gateway);
   const health = wifi.connected ? Math.min(99, Math.max(45, Math.round((wifi.signal || 50) * 0.55 + (ping ? Math.max(0, 45 - ping / 3) : 20)))) : 18;
   const band = wifi.channel && wifi.channel <= 14 ? '2.4 GHz' : '5 GHz';
@@ -141,7 +156,9 @@ async function getWindowsStatus() {
   state.network = {
     ...state.network,
     name: wifi.ssid || 'Sin conexión Wi-Fi',
-    router: gateway ? `Router detectado en ${gateway}` : (wifi.description || 'Adaptador Wi-Fi'),
+    router: routerHints.vendor ? `${routerHints.vendor} · router en ${gateway || 'gateway local'}` : (gateway ? `Router detectado en ${gateway}` : (wifi.description || 'Adaptador Wi-Fi')),
+    routerVendor: routerHints.vendor,
+    dnsSuffix: routerHints.dnsSuffix,
     channel: wifi.channel || state.network.channel,
     band,
     health,
@@ -347,6 +364,7 @@ async function routeApi(request, response, pathname) {
           code: 'ROUTER_CONTROL_REQUIRED',
           gateway,
           routerMac,
+          routerVendor: state.network.routerVendor,
           adminUrl: gateway ? `http://${gateway}` : null,
           error: 'El canal lo controla el router. Windows puede analizar tu Wi-Fi, pero no cambiar el canal del punto de acceso sin la API y las credenciales del router.'
         });
