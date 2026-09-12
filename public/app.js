@@ -23,10 +23,10 @@ const iconPaths = {
 };
 
 const fallbackState = {
-  network: { name: 'Casa de Ana', channel: 44, band: '5 GHz', health: 92, ping: 24 },
+  network: { name: 'Casa de Willian', channel: 44, band: '5 GHz', health: 92, ping: 24 },
   devices: [
-    { name: 'MacBook Pro de Ana', type: 'Portátil', ip: '192.168.1.12', signal: 94, band: '5 GHz', status: 'Excelente' },
-    { name: 'iPhone de Ana', type: 'Móvil', ip: '192.168.1.18', signal: 88, band: '5 GHz', status: 'Excelente' },
+    { name: 'MacBook Pro de Willian', type: 'Portátil', ip: '192.168.1.12', signal: 94, band: '5 GHz', status: 'Excelente' },
+    { name: 'iPhone de Willian', type: 'Móvil', ip: '192.168.1.18', signal: 88, band: '5 GHz', status: 'Excelente' },
     { name: 'TV Salón', type: 'Televisor', ip: '192.168.1.24', signal: 62, band: '2.4 GHz', status: 'Estable' },
     { name: 'Altavoz Nest', type: 'Altavoz', ip: '192.168.1.31', signal: 45, band: '2.4 GHz', status: 'Débil' }
   ],
