@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08121e" />
+    <meta name="description" content="Ecualizador de música local de NexoWiFi." />
+    <title>NexoWiFi · Ecualizador</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="equalizer.css" />
+  </head>
+  <body class="equalizer-body">
+    <div class="eq-shell">
+      <aside class="eq-rail">
+        <a class="eq-brand" href="index.html" aria-label="Volver al resumen"><div class="brand-mark"><span></span><span></span><span></span></div><span class="brand-name">nexo<span>wifi</span></span><span class="beta-pill">BETA</span></a>
+        <a class="eq-back" href="index.html"><span>←</span> Volver al centro de control</a>
+        <div class="eq-rail-divider"></div>
+        <div class="eq-rail-title">ESTUDIO DE SONIDO</div>
+        <div class="eq-rail-item active"><span class="rail-dot"></span><span>Ecualizador</span></div>
+        <div class="eq-rail-item muted"><span class="rail-icon">◒</span><span>Sonido espacial</span><em>PRONTO</em></div>
+        <div class="eq-rail-item muted"><span class="rail-icon">◌</span><span>Mejoras de audio</span><em>PRONTO</em></div>
+        <div class="eq-rail-grow"></div>
+        <div class="eq-tip"><span class="tip-pulse"></span><strong>Procesamiento local</strong><p>Tu música no sale de este dispositivo. El audio se procesa en el navegador.</p></div>
+        <a class="eq-user" href="index.html"><span class="avatar">WR</span><span><strong>Willian Ruiz</strong><small>Cuenta personal</small></span><b>›</b></a>
+      </aside>
+
+      <main class="eq-main">
+        <header class="eq-topbar"><div class="eq-mobile-brand"><div class="brand-mark small"><span></span><span></span><span></span></div><span class="brand-name">nexo<span>wifi</span></span></div><div class="eq-breadcrumb"><a href="index.html">Centro de control</a><b>/</b><strong>Ecualizador</strong></div><div class="eq-top-actions"><span class="local-pill"><i></i> AUDIO LOCAL</span><a class="back-mobile" href="index.html">Salir</a></div></header>
+        <div class="eq-wrap">
+          <section class="eq-heading"><div><p class="eq-eyebrow"><span class="pulse-dot"></span> TU ESPACIO DE ESCUCHA</p><h1>Ecualiza tu música</h1><p>Da forma al sonido, guarda el ambiente que te gusta y escucha todo a tu manera.</p></div><button class="eq-reset-button" id="reset-all">Restablecer <span>↺</span></button></section>
+
+          <section class="eq-grid">
+            <article class="music-player eq-card">
+              <div class="card-label">REPRODUCTOR LOCAL <span class="secure-mini">● SIN SUBIDAS</span></div>
+              <label class="drop-zone" id="drop-zone" for="file-input"><input id="file-input" type="file" accept="audio/*" /><div class="drop-icon">♪</div><strong>Arrastra una canción aquí</strong><small>o haz clic para elegir un archivo de audio</small><span class="choose-file">Elegir archivo</span></label>
+              <div class="track-area"><div class="album-art" id="album-art"><span>♪</span><i></i><b></b></div><div class="track-copy"><strong id="track-title">Ninguna canción seleccionada</strong><span id="track-subtitle">Carga un MP3, WAV, OGG o M4A para comenzar</span><div class="track-status" id="track-status"><i></i> Listo para escuchar</div></div></div>
+              <div class="transport"><button class="transport-button" id="previous" aria-label="Reiniciar canción">↶</button><button class="play-button" id="play-button" aria-label="Reproducir" disabled><span id="play-icon">▶</span></button><button class="transport-button" id="next" aria-label="Siguiente canción">↷</button></div>
+              <div class="progress-area"><span id="current-time">0:00</span><input id="progress" type="range" min="0" max="100" value="0" aria-label="Progreso de la canción" /><span id="duration">0:00</span></div>
+              <div class="player-footer"><span><i class="green-led"></i> Procesado en este navegador</span><button id="mute-button" aria-label="Silenciar">◖ Volumen</button></div>
+            </article>
+
+            <article class="equalizer-panel eq-card">
+              <div class="panel-head"><div><span class="card-label">ECUALIZADOR PARAMÉTRICO</span><h2>Encuentra tu sonido</h2></div><label class="switch-label"><input id="bypass" type="checkbox" /><span class="switch"></span><small>Bypass</small></label></div>
+              <div class="preset-row" role="group" aria-label="Presets"><span>PREAJUSTES</span><button class="preset active" data-preset="flat">Plano</button><button class="preset" data-preset="rock">Rock</button><button class="preset" data-preset="pop">Pop</button><button class="preset" data-preset="jazz">Jazz</button><button class="preset" data-preset="voice">Voz</button></div>
+              <div class="eq-chart"><canvas id="eq-canvas" aria-label="Curva de ecualización"></canvas><div class="chart-scale"><span>+12</span><span>+6</span><span>0</span><span>-6</span><span>-12</span></div></div>
+              <div class="sliders" id="sliders"></div>
+              <div class="eq-footer"><span id="gain-readout">Ganancia plana · 0 dB</span><button class="small-reset" id="reset-eq">Restablecer EQ</button></div>
+            </article>
+          </section>
+
+          <section class="eq-bottom-grid">
+            <article class="visualizer-card eq-card"><div class="panel-head"><div><span class="card-label">VISUALIZADOR</span><h2>Así suena ahora</h2></div><span class="visualizer-state"><i></i> EN VIVO</span></div><canvas id="visualizer" height="112"></canvas><div class="visualizer-footer"><span id="visualizer-message">Carga una canción para activar el visualizador</span><span>Web Audio API · 44.1 kHz</span></div></article>
+            <article class="mixer-card eq-card"><div class="panel-head"><div><span class="card-label">SALIDA</span><h2>Control de escucha</h2></div><span class="output-icon">◉</span></div><div class="volume-row"><span>Volumen</span><strong id="volume-value">80%</strong></div><input class="volume-slider" id="volume" type="range" min="0" max="100" value="80" /><div class="mixer-line"><span><i class="green-led"></i> Sin clipping</span><span id="peak-value">Pico —</span></div><div class="mixer-note"><span>✦</span><p><strong>Consejo rápido</strong><br />Empieza con Plano y cambia solo lo que realmente echas de menos.</p></div></article>
+          </section>
+          <footer class="eq-footer-bar"><span>✦ Nexo procesa el audio localmente</span><span><a href="index.html">Volver al centro de control</a> <b>·</b> NexoWiFi v1.0</span></footer>
+        </div>
+      </main>
+    </div>
+    <audio id="audio" preload="metadata"></audio>
+    <script src="equalizer.js"></script>
+  </body>
+</html>

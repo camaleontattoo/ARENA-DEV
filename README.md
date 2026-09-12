@@ -41,3 +41,15 @@ Para automatizar también esa parte hace falta conocer la marca/modelo del route
 - `POST /api/scan`
 - `POST /api/repair`
 - `POST /api/channel`
+
+## Ecualizador de música
+
+La nueva página `equalizer.html` añade un ecualizador de 10 bandas usando Web Audio API:
+
+- Carga archivos locales MP3, WAV, OGG o M4A.
+- Presets Plano, Rock, Pop, Jazz y Voz.
+- Ganancia independiente de 31 Hz a 16 kHz.
+- Bypass, volumen, progreso, visualizador y reproducción local.
+- Ningún archivo de audio se sube al servidor.
+
+Con el servidor activo, abre `http://localhost:4173/equalizer.html` (o el puerto que indique `npm start`). También puedes entrar desde **Ecualizador** en la barra lateral del panel.

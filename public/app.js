@@ -2,6 +2,7 @@ const iconPaths = {
   grid: '<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/>',
   radar: '<circle cx="12" cy="12" r="8.5"/><path d="M12 12l6-6M12 5v2M5 12h2M12 19v-2M19 12h-2"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
   sliders: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>',
+  music: '<path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3ZM19 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z"/>',
   devices: '<rect x="3" y="4" width="12" height="9" rx="1.5"/><path d="M7 17h4M9 13v4M18 8h3v10h-3M19.5 15.5h.01"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
   settings: '<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1-1.7 2.9-.2-.1a2.1 2.1 0 0 0-2.1 0l-.3.2a2.1 2.1 0 0 0-1 1.8v.2H10.8v-.2a2.1 2.1 0 0 0-1-1.8l-.3-.2a2.1 2.1 0 0 0-2.1 0l-.2.1-1.7-2.9.1-.1a2.1 2.1 0 0 0 1-1.8v-.4a2.1 2.1 0 0 0-1-1.8l-.1-.1 1.7-2.9.2.1a2.1 2.1 0 0 0 2.1 0l.3-.2a2.1 2.1 0 0 0 1-1.8v-.2h3.4v.2a2.1 2.1 0 0 0 1 1.8l.3.2a2.1 2.1 0 0 0 2.1 0l.2-.1 1.7 2.9-.1.1a2.1 2.1 0 0 0-1 1.8v.4a2.1 2.1 0 0 0 1 1.8Z"/>',
