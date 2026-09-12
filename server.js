@@ -60,7 +60,7 @@ function commandValue(output, labels) {
   const accepted = labels.map(cleanText);
   const line = output.split(/\r?\n/).find(item => {
     const normalized = cleanText(item.trimStart());
-    return accepted.some(label => normalized.startsWith(`${label} :`));
+    return accepted.some(label => normalized.startsWith(label) && normalized.slice(label.length).trimStart().startsWith(':'));
   });
   return line ? line.slice(line.indexOf(':') + 1).trim() : '';
 }

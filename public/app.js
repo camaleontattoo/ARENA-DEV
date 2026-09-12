@@ -68,6 +68,9 @@ function renderHealth() {
   const ping = Number(state.network.ping || 24);
   $('#health-value').textContent = health;
   $('#ring-value').textContent = health;
+  $('#health-title').textContent = health >= 80 ? 'Tu red está estable' : health >= 50 ? 'Tu red necesita revisión' : 'Tu red necesita atención';
+  $('#health-description').textContent = health >= 80 ? 'La conexión funciona bien y no hemos encontrado problemas importantes.' : 'Hemos detectado una señal o conexión débil. Ejecuta la reparación para revisar tu equipo.';
+  $('#health-label').textContent = health >= 80 ? 'Excelente' : health >= 50 ? 'Revisar' : 'Débil';
   $('#health-bar').style.width = `${health}%`;
   $('.health-ring').style.background = `conic-gradient(var(--cyan) 0deg ${health * 3.6}deg, #18313f ${health * 3.6}deg 360deg)`;
   $('#ping-value').textContent = ping;
