@@ -70,9 +70,21 @@ function numberValue(value) {
   return match ? Number(match[0].replace(',', '.')) : null;
 }
 
+function windowsCommand(command) {
+  if (!isWindows) return command;
+  const systemRoot = process.env.SystemRoot || process.env.WINDIR || 'C:\\Windows';
+  return join(systemRoot, 'System32', `${command}.exe`);
+}
+
 async function runLocalCommand(command, args, timeout = 15000) {
-  const result = await execFile(command, args, { windowsHide: true, timeout, maxBuffer: 1024 * 1024 });
-  return result.stdout || '';
+  const executable = windowsCommand(command);
+  try {
+    const result = await execFile(executable, args, { windowsHide: true, timeout, maxBuffer: 1024 * 1024 });
+    return result.stdout || '';
+  } catch (error) {
+    error.command = `${executable} ${args.join(' ')}`;
+    throw error;
+  }
 }
 
 async function getWindowsInterface() {
@@ -239,6 +251,7 @@ async function routeApi(request, response, pathname) {
           channels: scannedChannels
         });
       } catch (error) {
+        console.error(`[scan] ${error.command || 'netsh'}\n${error.stack || error.message}`);
         return json(response, 500, { ok: false, real: true, error: `Windows no pudo escanear el Wi-Fi: ${error.message}` });
       }
     }

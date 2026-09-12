@@ -126,10 +126,15 @@ async function api(path, options = {}) {
   // También soporta abrir public/index.html directamente como archivo estático.
   // En producción, estas mismas acciones pasan por server.js.
   if (window.location.protocol === 'file:') return localApi(path, options);
-  const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  let response;
+  try {
+    response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  } catch {
+    throw new Error(`No se pudo conectar con NexoWiFi en ${window.location.origin}. Comprueba que npm start siga ejecutándose.`);
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(data.error || 'No se pudo completar la acción');
+    const error = new Error(data.error || `El servidor respondió con HTTP ${response.status}`);
     error.details = data;
     throw error;
   }
