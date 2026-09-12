@@ -392,25 +392,30 @@ async function serveStatic(request, response, pathname) {
   } catch { json(response, 500, { error: 'No se pudo leer el archivo' }); }
 }
 
-const server = http.createServer((request, response) => {
-  const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
-  if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
-    response.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
-    response.end();
-    return;
-  }
-  if (url.pathname.startsWith('/api/')) return routeApi(request, response, url.pathname);
-  return serveStatic(request, response, url.pathname);
-});
+function createHttpServer() {
+  return http.createServer((request, response) => {
+    const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+    if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      response.end();
+      return;
+    }
+    if (url.pathname.startsWith('/api/')) return routeApi(request, response, url.pathname);
+    return serveStatic(request, response, url.pathname);
+  });
+}
 
 function startServer(listenPort) {
+  // Cada intento usa un servidor nuevo. Así no se imprimen falsos mensajes de
+  // "listo" de los intentos anteriores cuando un puerto está ocupado.
+  const server = createHttpServer();
   const onError = error => {
     if (error.code === 'EADDRINUSE' && !process.env.PORT && listenPort < 65000) {
-      server.removeListener('error', onError);
+      server.close();
       console.warn(`El puerto ${listenPort} está ocupado. Probando el puerto ${listenPort + 1}...`);
       startServer(listenPort + 1);
       return;
@@ -427,7 +432,7 @@ function startServer(listenPort) {
   server.once('error', onError);
   server.listen(listenPort, '0.0.0.0', () => {
     console.log(`NexoWiFi listo en http://localhost:${listenPort}`);
-    console.log('Modo demo: las acciones se simulan de forma segura en este entorno.');
+    console.log('Modo local: Windows se consulta desde este equipo cuando es posible.');
   });
 }
 
