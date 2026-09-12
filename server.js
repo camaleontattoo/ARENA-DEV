@@ -179,7 +179,9 @@ function json(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
   });
   res.end(JSON.stringify(data));
 }
@@ -345,6 +347,15 @@ async function serveStatic(request, response, pathname) {
 
 const server = http.createServer((request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+  if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
+    response.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+    response.end();
+    return;
+  }
   if (url.pathname.startsWith('/api/')) return routeApi(request, response, url.pathname);
   return serveStatic(request, response, url.pathname);
 });

@@ -122,23 +122,39 @@ function render() {
   renderActivity();
 }
 
+function apiBases() {
+  // Live Server suele usar 5500. Permitimos usarlo como frontend, pero las API
+  // siempre se resuelven contra el backend de npm start.
+  if (window.location.port === '5500') return ['http://localhost:4173', 'http://localhost:4174'];
+  return [''];
+}
+
 async function api(path, options = {}) {
   // También soporta abrir public/index.html directamente como archivo estático.
-  // En producción, estas mismas acciones pasan por server.js.
   if (window.location.protocol === 'file:') return localApi(path, options);
-  let response;
-  try {
-    response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
-  } catch {
-    throw new Error(`No se pudo conectar con NexoWiFi en ${window.location.origin}. Comprueba que npm start siga ejecutándose.`);
+  let lastError;
+  for (const base of apiBases()) {
+    try {
+      const response = await fetch(`${base}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data.error || `El servidor respondió con HTTP ${response.status}`);
+        error.details = data;
+        error.status = response.status;
+        // Si encontramos otro servidor en 4173/4174, probamos el siguiente.
+        if ((response.status === 404 || response.status === 405) && base !== apiBases().at(-1)) {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      lastError = error;
+      if (error.details && error.status !== 404 && error.status !== 405) throw error;
+    }
   }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(data.error || `El servidor respondió con HTTP ${response.status}`);
-    error.details = data;
-    throw error;
-  }
-  return data;
+  throw lastError || new Error(`No se pudo conectar con NexoWiFi. Comprueba que npm start siga ejecutándose.`);
 }
 
 async function localApi(path, options = {}) {
