@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08131f" />
+    <meta name="description" content="NexoWiFi: diagnostica y optimiza tu red doméstica." />
+    <title>NexoWiFi · Centro de red</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="brand-name">nexo<span>wifi</span></span>
+          <span class="beta-pill">BETA</span>
+        </div>
+
+        <div class="network-select" role="button" tabindex="0" aria-label="Red seleccionada">
+          <div class="network-icon"><span></span></div>
+          <div class="network-copy"><span>Red doméstica</span><strong>Casa de Ana</strong></div>
+          <span class="chevron">⌄</span>
+        </div>
+
+        <p class="nav-label">CENTRO DE CONTROL</p>
+        <nav class="main-nav" aria-label="Navegación principal">
+          <button class="nav-item active" data-view="overview"><span class="nav-icon" data-icon="grid"></span><span>Resumen</span></button>
+          <button class="nav-item" data-view="scan"><span class="nav-icon" data-icon="radar"></span><span>Escanear red</span><em class="nav-badge">2</em></button>
+          <button class="nav-item" data-view="optimize"><span class="nav-icon" data-icon="sliders"></span><span>Optimizar</span></button>
+          <button class="nav-item" data-view="devices"><span class="nav-icon" data-icon="devices"></span><span>Dispositivos</span><em class="nav-count">4</em></button>
+          <button class="nav-item" data-view="history"><span class="nav-icon" data-icon="clock"></span><span>Historial</span></button>
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+        <div class="agent-card">
+          <div class="agent-card-top"><span class="agent-dot"></span><span>Asistente de red</span><span class="agent-live">ACTIVO</span></div>
+          <p>Todo en orden. Te avisaré si detecto algo que puedas mejorar.</p>
+          <button class="agent-link" data-action="repair"><span>Revisar ahora</span><span>→</span></button>
+        </div>
+        <button class="settings-link nav-item" data-action="settings"><span class="nav-icon" data-icon="settings"></span><span>Configuración</span></button>
+        <div class="sidebar-user">
+          <div class="avatar">AM</div><div><strong>Ana Martínez</strong><span>Plan personal</span></div><button class="more-button" aria-label="Más opciones">•••</button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand"><div class="brand-mark small"><span></span><span></span><span></span></div><span class="brand-name">nexo<span>wifi</span></span></div>
+          <button class="mobile-menu" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+          <div class="breadcrumb"><span>Centro de control</span><b>/</b><strong>Resumen</strong></div>
+          <div class="topbar-actions">
+            <button class="icon-button notification-button" aria-label="Notificaciones"><span data-icon="bell"></span><i></i></button>
+            <div class="top-divider"></div>
+            <div class="top-user"><div class="avatar small">AM</div><div><strong>Ana Martínez</strong><span>Cuenta personal</span></div><span class="chevron">⌄</span></div>
+          </div>
+        </header>
+
+        <div class="page-wrap">
+          <section class="page-heading">
+            <div><p class="eyebrow"><span class="pulse-dot"></span> MONITORIZACIÓN EN VIVO <span class="last-update">· actualizado hace 2 min</span></p><h1>Buenos días, Ana <span class="wave">✦</span></h1><p class="heading-copy">Aquí tienes una vista clara de cómo respira tu red hoy.</p></div>
+            <button class="outline-button" data-action="scan"><span data-icon="refresh"></span><span>Actualizar datos</span></button>
+          </section>
+
+          <section class="hero-grid">
+            <article class="health-card panel">
+              <div class="health-card-copy"><div class="section-kicker"><span class="status-orb"></span> ESTADO DE LA RED</div><h2>Tu red está estable</h2><p>La conexión funciona bien y no hemos encontrado problemas importantes.</p><div class="health-score"><strong id="health-value">92</strong><span>/ 100</span><div class="score-track"><div id="health-bar" style="width:92%"></div></div><em>Excelente</em></div><button class="text-button" data-action="repair">Ejecutar diagnóstico completo <span>→</span></button></div>
+              <div class="health-visual" aria-label="Salud de red 92 sobre 100"><div class="health-ring"><div class="ring-center"><span data-icon="shield"></span><strong id="ring-value">92</strong><small>salud</small></div></div><div class="ring-caption"><span class="check-circle">✓</span> Sin alertas críticas</div></div>
+            </article>
+            <div class="metric-grid">
+              <article class="metric-card panel"><div class="metric-top"><span class="metric-label">LATENCIA</span><span class="metric-icon cyan" data-icon="activity"></span></div><div class="metric-value"><strong id="ping-value">24</strong><span>ms</span></div><div class="metric-foot good"><span>↓ 8 ms</span><span>vs. ayer</span></div><div class="sparkline cyan-line"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+              <article class="metric-card panel"><div class="metric-top"><span class="metric-label">DESCARGA</span><span class="metric-icon violet" data-icon="download"></span></div><div class="metric-value"><strong>286</strong><span>Mbps</span></div><div class="metric-foot good"><span>↑ 12%</span><span>vs. ayer</span></div><div class="sparkline violet-line"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+              <article class="metric-card panel"><div class="metric-top"><span class="metric-label">DISPOSITIVOS</span><span class="metric-icon amber" data-icon="devices"></span></div><div class="metric-value"><strong>4</strong><span>activos</span></div><div class="metric-foot neutral"><span>0</span><span>con problemas</span></div><div class="device-dots"><span></span><span></span><span></span><span></span><i>+0</i></div></article>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <article class="channel-card panel">
+              <div class="card-heading"><div><span class="section-kicker">ENTORNO DE RADIO</span><h2>Panorama de canales</h2><p>Revisa el nivel de congestión cerca de tu router.</p></div><div class="segmented" role="tablist" aria-label="Banda de frecuencia"><button class="segment active" data-band="5 GHz">5 GHz</button><button class="segment" data-band="2.4 GHz">2.4 GHz</button></div></div>
+              <div class="chart-legend"><span><i class="legend-dot yours"></i>Tu red <b>Canal <span id="current-channel">44</span></b></span><span><i class="legend-dot busy"></i>Congestión <b>porcentaje de uso</b></span></div>
+              <div class="channel-chart" id="channel-chart"><div class="chart-grid"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div class="bars"></div></div>
+              <div class="chart-footer"><span><i class="signal-dot green"></i> Menos congestionado</span><span><i class="signal-dot amber"></i> Moderado</span><span><i class="signal-dot red"></i> Muy utilizado</span><button class="text-button" data-action="channel">Elegir canal <span>→</span></button></div>
+            </article>
+
+            <article class="actions-card panel">
+              <div class="card-heading"><div><span class="section-kicker">MANTÉN TODO A PUNTO</span><h2>Acciones rápidas</h2></div><span class="spark-icon" data-icon="spark"></span></div>
+              <div class="quick-actions"><button class="quick-action" data-action="scan"><span class="quick-icon scan-icon" data-icon="radar"></span><span><strong>Escanear mi red</strong><small>Detecta interferencias y vecinos</small></span><b>→</b></button><button class="quick-action featured" data-action="repair"><span class="quick-icon fix-icon" data-icon="wand"></span><span><strong>Reparación inteligente</strong><small>Soluciona problemas automáticamente</small></span><b>→</b></button><button class="quick-action" data-action="channel"><span class="quick-icon channel-icon" data-icon="radio"></span><span><strong>Cambiar canal Wi-Fi</strong><small>Elige la ruta más despejada</small></span><b>→</b></button></div>
+              <div class="tip-box"><span class="tip-icon" data-icon="lightbulb"></span><p><strong>Consejo de Nexo</strong><br />Tu red de 2.4 GHz está algo cargada. Conecta tu TV a 5 GHz si está cerca.</p><button aria-label="Cerrar consejo">×</button></div>
+            </article>
+          </section>
+
+          <section class="bottom-grid">
+            <article class="devices-card panel">
+              <div class="card-heading"><div><span class="section-kicker">CONECTADOS AHORA</span><h2>Tus dispositivos <span class="count-pill">4</span></h2></div><button class="text-button" data-view-target="devices">Ver todos <span>→</span></button></div>
+              <div class="device-list" id="device-list"></div>
+            </article>
+            <article class="activity-card panel">
+              <div class="card-heading"><div><span class="section-kicker">ÚLTIMOS CAMBIOS</span><h2>Actividad reciente</h2></div><button class="icon-button subtle" aria-label="Más actividad">•••</button></div>
+              <div class="activity-list" id="activity-list"></div>
+              <button class="activity-footer" data-view-target="history">Ver historial completo <span>→</span></button>
+            </article>
+          </section>
+          <footer class="page-footer"><span><i class="secure-dot"></i> Conexión segura · datos locales</span><span>NexoWiFi v1.0 <b>·</b> Último análisis: <span id="footer-time">hace 2 min</span></span></footer>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+    <section class="modal" id="repair-modal" role="dialog" aria-modal="true" aria-labelledby="repair-title" hidden>
+      <button class="modal-close" data-close-modal aria-label="Cerrar">×</button>
+      <div class="modal-icon repair-modal-icon"><span data-icon="wand"></span></div><span class="section-kicker">ASISTENTE DE REPARACIÓN</span><h2 id="repair-title">Vamos a poner tu red a punto</h2><p class="modal-intro">Nexo revisará la conexión, la saturación del canal y el DNS. No desconectaremos tus dispositivos sin avisarte.</p>
+      <div class="repair-steps" id="repair-steps"><div class="repair-step active"><span>1</span><div><strong>Diagnóstico rápido</strong><small>Latencia, señal y acceso a internet</small></div><i data-icon="check"></i></div><div class="repair-step"><span>2</span><div><strong>Optimización automática</strong><small>Canal, DNS y conexión local</small></div><i data-icon="check"></i></div><div class="repair-step"><span>3</span><div><strong>Comprobación final</strong><small>Verificamos que todo haya mejorado</small></div><i data-icon="check"></i></div></div>
+      <div class="repair-result" id="repair-result" hidden><span class="result-check">✓</span><div><strong>¡Tu red está optimizada!</strong><p>Hemos reducido la latencia y elegido una ruta más estable.</p></div></div>
+      <div class="modal-actions"><button class="outline-button" data-close-modal>Cancelar</button><button class="primary-button" id="run-repair"><span data-icon="spark"></span> Iniciar reparación</button></div>
+    </section>
+
+    <section class="modal channel-modal" id="channel-modal" role="dialog" aria-modal="true" aria-labelledby="channel-title" hidden>
+      <button class="modal-close" data-close-modal aria-label="Cerrar">×</button><div class="modal-icon channel-modal-icon"><span data-icon="radio"></span></div><span class="section-kicker">OPTIMIZACIÓN MANUAL</span><h2 id="channel-title">Elige el mejor canal</h2><p class="modal-intro">Un canal despejado puede mejorar la estabilidad. Nexo recomienda el canal <strong>44</strong>.</p>
+      <div class="channel-options" id="channel-options"><label class="channel-option recommended"><input type="radio" name="channel" value="44" checked /><span class="radio-ui"></span><span><strong>Canal 44</strong><small>Muy despejado · recomendado</small></span><em>18% uso</em><b>MEJOR</b></label><label class="channel-option"><input type="radio" name="channel" value="36" /><span class="radio-ui"></span><span><strong>Canal 36</strong><small>Despejado</small></span><em>24% uso</em></label><label class="channel-option"><input type="radio" name="channel" value="48" /><span class="radio-ui"></span><span><strong>Canal 48</strong><small>Estable</small></span><em>31% uso</em></label></div>
+      <div class="modal-actions"><button class="outline-button" data-close-modal>Cancelar</button><button class="primary-button" id="apply-channel"><span data-icon="check"></span> Aplicar canal</button></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-mark">✓</span><span id="toast-message">Listo</span></div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
