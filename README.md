@@ -53,3 +53,10 @@ La nueva página `equalizer.html` añade un ecualizador de 10 bandas usando Web 
 - Ningún archivo de audio se sube al servidor.
 
 Con el servidor activo, abre `http://localhost:4173/equalizer.html` (o el puerto que indique `npm start`). También puedes entrar desde **Ecualizador** en la barra lateral del panel.
+
+### Música online
+
+- Para una radio o archivo de audio directo, pega su URL en el campo de URL. El servidor remoto debe permitir CORS.
+- Para YouTube, Spotify Web y cualquier pestaña del navegador, carga la extensión local de Chrome/Edge desde la carpeta `extension/`: abre `chrome://extensions`, activa **Modo desarrollador**, pulsa **Cargar descomprimida** y selecciona esa carpeta. Después abre la pestaña de música, pulsa el icono de NexoWiFi y selecciona **Activar en esta pestaña**.
+- La extensión procesa el audio renderizado de la pestaña y no lo graba. Algunas páginas con DRM pueden impedir la captura.
+- Para ecualizar absolutamente todo el audio de Windows, incluidas aplicaciones de escritorio, hace falta un dispositivo de audio virtual o un driver de sistema; una web no puede interceptar ese audio por sus permisos de seguridad.

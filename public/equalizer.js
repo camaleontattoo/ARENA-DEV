@@ -10,6 +10,8 @@ const presets = {
 
 const audio = document.querySelector('#audio');
 const fileInput = document.querySelector('#file-input');
+const streamUrl = document.querySelector('#stream-url');
+const loadUrlButton = document.querySelector('#load-url');
 const dropZone = document.querySelector('#drop-zone');
 const playButton = document.querySelector('#play-button');
 const playIcon = document.querySelector('#play-icon');
@@ -199,6 +201,7 @@ function loadFile(file) {
   if (!file || !file.type.startsWith('audio/')) { showStatus('Selecciona un archivo de audio válido'); return; }
   if (objectUrl) URL.revokeObjectURL(objectUrl);
   objectUrl = URL.createObjectURL(file);
+  audio.crossOrigin = '';
   audio.src = objectUrl;
   audio.load();
   trackTitle.textContent = file.name.replace(/\.[^/.]+$/, '');
@@ -206,6 +209,21 @@ function loadFile(file) {
   playButton.disabled = false;
   visualizerMessage.textContent = 'Pulsa reproducir para activar el visualizador';
   showStatus('Canción cargada · lista para reproducir');
+  document.querySelector('#album-art').classList.add('has-track');
+}
+
+function loadRemoteUrl() {
+  const url = streamUrl.value.trim();
+  if (!/^https?:\/\//i.test(url)) { showStatus('Pega una URL http o https válida'); return; }
+  if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = ''; }
+  audio.crossOrigin = 'anonymous';
+  audio.src = url;
+  audio.load();
+  try { trackTitle.textContent = new URL(url).pathname.split('/').pop() || 'Audio online'; } catch { trackTitle.textContent = 'Audio online'; }
+  trackSubtitle.textContent = 'URL directa · requiere permiso CORS del servidor';
+  playButton.disabled = false;
+  visualizerMessage.textContent = 'Pulsa reproducir para activar el visualizador';
+  showStatus('Probando el audio online…');
   document.querySelector('#album-art').classList.add('has-track');
 }
 
@@ -226,6 +244,8 @@ function updatePlayState() {
 }
 
 fileInput.addEventListener('change', event => loadFile(event.target.files[0]));
+loadUrlButton.addEventListener('click', loadRemoteUrl);
+streamUrl.addEventListener('keydown', event => { if (event.key === 'Enter') loadRemoteUrl(); });
 dropZone.addEventListener('dragover', event => { event.preventDefault(); dropZone.classList.add('dragging'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
 dropZone.addEventListener('drop', event => { event.preventDefault(); dropZone.classList.remove('dragging'); loadFile(event.dataTransfer.files[0]); });
@@ -239,7 +259,8 @@ bypass.addEventListener('change', updateAllFilters);
 document.querySelectorAll('.preset').forEach(button => button.addEventListener('click', () => setPreset(button.dataset.preset)));
 document.querySelector('#reset-eq').addEventListener('click', () => setPreset('flat'));
 document.querySelector('#reset-all').addEventListener('click', () => { setPreset('flat'); volume.value = 80; volume.dispatchEvent(new Event('input')); bypass.checked = false; updateAllFilters(); });
-audio.addEventListener('loadedmetadata', () => { duration.textContent = formatTime(audio.duration); });
+audio.addEventListener('loadedmetadata', () => { duration.textContent = formatTime(audio.duration); showStatus('Audio cargado · listo para reproducir'); });
+audio.addEventListener('error', () => { playButton.disabled = true; showStatus('No se pudo cargar. Puede ser una URL sin CORS o un formato no compatible.'); });
 audio.addEventListener('timeupdate', () => { currentTime.textContent = formatTime(audio.currentTime); progress.value = audio.duration ? audio.currentTime / audio.duration * 100 : 0; });
 audio.addEventListener('play', updatePlayState);
 audio.addEventListener('pause', updatePlayState);

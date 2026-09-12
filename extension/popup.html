@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NexoWiFi Equalizer</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header><div class="logo"><span class="mark">///</span><strong>nexo<span>wifi</span></strong></div><small>EQ</small></header>
+    <main>
+      <div class="intro"><div><span class="eyebrow">AUDIO DE LA PESTAÑA</span><h1>Ecualizador online</h1></div><span class="live-dot" id="live-dot"></span></div>
+      <p class="hint" id="status">Pulsa activar para ecualizar YouTube, Spotify Web o cualquier pestaña.</p>
+      <button class="capture-button" id="capture">Activar en esta pestaña</button>
+      <div class="presets"><span>PREAJUSTES</span><button class="preset active" data-preset="flat">Plano</button><button class="preset" data-preset="rock">Rock</button><button class="preset" data-preset="pop">Pop</button><button class="preset" data-preset="voice">Voz</button></div>
+      <label class="bypass"><input type="checkbox" id="bypass" /><span></span> Bypass</label>
+      <section class="bands" id="bands"></section>
+      <p class="privacy">Procesamiento local · el audio no se graba ni se sube</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "NexoWiFi Audio Equalizer",
+  "version": "1.0.0",
+  "description": "Ecualizador de 10 bandas para el audio de la pestaña actual.",
+  "permissions": ["activeTab", "tabCapture", "offscreen", "storage"],
+  "background": { "service_worker": "service-worker.js" },
+  "action": {
+    "default_title": "NexoWiFi Equalizer",
+    "default_popup": "popup.html"
+  }
+}
