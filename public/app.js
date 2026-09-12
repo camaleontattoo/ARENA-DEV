@@ -260,8 +260,10 @@ async function runRepair() {
     const status = await api('/api/status');
     state.activity = status.activity;
     render();
+    $('#repair-result-title').textContent = result.warning ? 'Reparación parcial' : '¡Tu red está optimizada!';
+    $('#repair-result-detail').textContent = result.warning || 'Hemos reducido la latencia y elegido una ruta más estable.';
     $('#repair-result').hidden = false;
-    showToast(result.real ? 'Conexión local reparada' : 'Reparación de demostración completada');
+    showToast(result.warning ? 'Reparación parcial: revisa el aviso' : (result.real ? 'Conexión local reparada' : 'Reparación de demostración completada'));
   } catch (error) {
     $('#repair-result').hidden = true;
     showToast(error.message);

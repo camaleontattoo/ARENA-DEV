@@ -287,17 +287,30 @@ async function routeApi(request, response, pathname) {
       const [title, detail] = messages[action] || messages.smart;
 
       if (isWindows) {
+        // Estas acciones actúan sobre el equipo local. No cambian la configuración del router.
+        const warnings = [];
         try {
-          // Estas acciones actúan sobre el equipo local. No cambian la configuración del router.
           await runLocalCommand('ipconfig', ['flushdns'], 10000);
-          if (action === 'smart') await runLocalCommand('ipconfig', ['renew'], 20000);
-          const local = await getLocalStatus();
-          if (local?.network) state.network = local.network;
-          addActivity('success', title, detail);
-          return json(response, 200, { ok: true, real: true, title, detail, health: state.network.health, ping: state.network.ping });
         } catch (error) {
-          return json(response, 500, { ok: false, real: true, error: `No se pudo reparar la conexión: ${error.message}` });
+          warnings.push(`No se pudo vaciar el DNS: ${error.stderr?.trim() || error.message}`);
         }
+
+        if (action === 'smart') {
+          let adapterName = '';
+          try { adapterName = (await getWindowsInterface()).name; } catch { /* Se intentará el comando general. */ }
+          try {
+            await runLocalCommand('ipconfig', adapterName ? ['renew', adapterName] : ['renew'], 20000);
+          } catch (error) {
+            warnings.push(`Windows no pudo renovar la IP${adapterName ? ` de ${adapterName}` : ''}: ${error.stderr?.trim() || error.message}`);
+          }
+        }
+
+        const local = await getLocalStatus();
+        if (local?.network) state.network = local.network;
+        const warning = warnings.join(' ');
+        const finalDetail = warning ? `${detail}. Aviso: ${warning}` : detail;
+        addActivity(warning ? 'info' : 'success', title, finalDetail);
+        return json(response, 200, { ok: true, real: true, title, detail: finalDetail, warning: warning || null, health: state.network.health, ping: state.network.ping });
       }
 
       state.network.health = Math.min(99, state.network.health + 4);
