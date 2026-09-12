@@ -116,9 +116,39 @@ function render() {
 }
 
 async function api(path, options = {}) {
+  // También soporta abrir public/index.html directamente como archivo estático.
+  // En producción, estas mismas acciones pasan por server.js.
+  if (window.location.protocol === 'file:') return localApi(path, options);
   const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
   if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'No se pudo completar la acción');
   return response.json();
+}
+
+async function localApi(path, options = {}) {
+  await new Promise(resolve => setTimeout(resolve, 280));
+  const payload = options.body ? JSON.parse(options.body) : {};
+  if (path === '/api/status') return { ...state, mode: 'local', activity: state.activity || [], devices: state.devices, channels: state.channels };
+  if (path === '/api/scan') {
+    state.network.health = 94;
+    state.network.ping = 22;
+    state.network.lastScan = new Date().toISOString();
+    state.activity = [{ type: 'success', title: 'Escaneo completado', detail: 'No se encontraron interferencias críticas', time: 'Ahora' }, ...(state.activity || [])].slice(0, 5);
+    return { ok: true, message: 'Escaneo completado', scannedAt: state.network.lastScan, networksFound: 8, health: state.network.health, ping: state.network.ping, channels: state.channels };
+  }
+  if (path === '/api/repair') {
+    state.network.health = Math.min(99, state.network.health + 4);
+    state.network.ping = Math.max(14, state.network.ping - 3);
+    state.activity = [{ type: 'success', title: 'Diagnóstico terminado', detail: 'Se optimizó el canal y se renovó la conexión', time: 'Ahora' }, ...(state.activity || [])].slice(0, 5);
+    return { ok: true, title: 'Diagnóstico terminado', detail: 'Se optimizó el canal y se renovó la conexión', health: state.network.health, ping: state.network.ping };
+  }
+  if (path === '/api/channel') {
+    const channel = Number(payload.channel);
+    state.network.channel = channel;
+    state.network.health = Math.min(99, state.network.health + 2);
+    state.activity = [{ type: 'info', title: 'Canal optimizado', detail: `Cambio a canal ${channel} aplicado`, time: 'Ahora' }, ...(state.activity || [])].slice(0, 5);
+    return { ok: true, channel, health: state.network.health };
+  }
+  throw new Error('Ruta no encontrada');
 }
 
 function showToast(message) {
