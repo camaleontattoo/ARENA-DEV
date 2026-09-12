@@ -1,37 +1,43 @@
 # NexoWiFi
 
-Panel web en español para diagnosticar y optimizar una red Wi‑Fi: muestra la salud de la conexión, latencia, dispositivos, congestión por canal y actividad reciente.
+Panel web en español para diagnosticar y optimizar una red Wi‑Fi: muestra la salud de la conexión, latencia, escaneo de redes cercanas, congestión por canal y actividad reciente.
 
-## Ejecutar
+## Ejecutar en Windows
 
-Requiere Node.js 18 o superior.
+Requiere Node.js 18 o superior. El servidor debe ejecutarse en el mismo computador cuyo Wi‑Fi quieres revisar.
 
 ```bash
 npm start
 ```
 
-Abre `http://localhost:4173` en el navegador. Para usar otro puerto:
+Abre `http://localhost:4173` en el navegador. Si el puerto está ocupado, el servidor prueba automáticamente el siguiente puerto y lo imprime en la terminal.
+
+También puedes fijar uno manualmente:
 
 ```bash
 PORT=8080 npm start
 ```
 
-## Qué se puede probar
+## Funciones reales en Windows
 
-- **Escanear mi red**: simula un escaneo y actualiza latencia, salud y actividad.
-- **Reparación inteligente**: ejecuta un diagnóstico por pasos y aplica una optimización simulada.
-- **Cambiar canal Wi‑Fi**: permite seleccionar un canal de 5 GHz y registra el cambio.
-- **Panorama de canales**: alterna entre 5 GHz y 2.4 GHz.
-- **Dispositivos e historial**: muestra los equipos conectados y los últimos cambios.
+Cuando `server.js` se ejecuta en Windows, utiliza comandos locales del sistema:
 
-## Importante: conexión con hardware real
+- **Escanear mi red**: `netsh wlan show networks mode=bssid` para detectar SSID, señal, banda y canal de las redes cercanas.
+- **Estado de conexión**: `netsh wlan show interfaces`, `ipconfig` y un ping a Cloudflare DNS para obtener adaptador, SSID, canal, gateway y latencia.
+- **Reparación inteligente**: vacía el DNS con `ipconfig /flushdns` y renueva la dirección IP con `ipconfig /renew`. Esto actúa sobre el computador local y puede tardar unos segundos.
+- **Panorama de canales**: calcula la congestión a partir del escaneo real.
 
-La interfaz y la API funcionan en modo demo seguro dentro de este repositorio. Una web abierta en el navegador **no puede cambiar directamente el canal del router ni reparar el adaptador Wi‑Fi**: el navegador no tiene esos permisos y, en el entorno de preview, el servidor tampoco está dentro de la red doméstica del usuario.
+En Linux, macOS o el preview remoto se mantiene el modo demo porque esos comandos y permisos son diferentes.
 
-Para llevarlo a producción hay que conectar los endpoints de `server.js` a un agente local o a la API del router, por ejemplo:
+## Sobre cambiar el canal
 
-1. Un agente firmado en la misma máquina del usuario que use `nmcli`/NetworkManager, `netsh` en Windows o `airport`/`networksetup` en macOS.
-2. La API autenticada del router (cambio de canal, reinicio, firmware), nunca comandos recibidos directamente desde el navegador.
-3. Permisos explícitos, validación de canales, confirmación antes de desconectar dispositivos y registro de auditoría.
+El **canal del punto de acceso lo controla el router**, no el adaptador Wi‑Fi de Windows. Por seguridad no existe un comando universal que pueda cambiarlo en cualquier marca de router. NexoWiFi detecta el gateway y, al intentar aplicarlo, explica que debes abrir la configuración del router en esa dirección.
 
-Los endpoints ya están separados para esa integración: `GET /api/status`, `POST /api/scan`, `POST /api/repair` y `POST /api/channel`.
+Para automatizar también esa parte hace falta conocer la marca/modelo del router y conectar una API autenticada específica, por ejemplo TP-Link, ASUS, MikroTik, UniFi o la API del operador. No se deben enviar credenciales del router a un endpoint genérico.
+
+## API
+
+- `GET /api/status`
+- `POST /api/scan`
+- `POST /api/repair`
+- `POST /api/channel`

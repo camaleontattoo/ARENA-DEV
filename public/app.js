@@ -70,6 +70,7 @@ function renderHealth() {
   $('#health-bar').style.width = `${health}%`;
   $('.health-ring').style.background = `conic-gradient(var(--cyan) 0deg ${health * 3.6}deg, #18313f ${health * 3.6}deg 360deg)`;
   $('#ping-value').textContent = ping;
+  $('#network-name').textContent = state.network.name || 'Sin conexión Wi-Fi';
   $('#current-channel').textContent = state.network.channel;
   $('#footer-time').textContent = state.network.lastScan ? formatLastScan(state.network.lastScan) : 'hace 2 min';
 }
@@ -91,6 +92,12 @@ function renderChannels() {
 }
 
 function renderDevices() {
+  if (!state.devices?.length) {
+    $('#device-list').innerHTML = '<div class="empty-state"><span data-icon="info"></span><div><strong>Dispositivos no expuestos por Windows</strong><small>El escaneo local se centra en redes y señal Wi-Fi.</small></div></div>';
+    const icon = $('#device-list [data-icon]');
+    if (icon) icon.innerHTML = svgIcon('info');
+    return;
+  }
   $('#device-list').innerHTML = state.devices.map(device => `<div class="device-row">
     <div class="device-avatar">${svgIcon(deviceIcon(device.type))}</div>
     <div class="device-name"><strong>${esc(device.name)}</strong><span>${esc(device.ip)}</span></div>
@@ -120,8 +127,13 @@ async function api(path, options = {}) {
   // En producción, estas mismas acciones pasan por server.js.
   if (window.location.protocol === 'file:') return localApi(path, options);
   const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
-  if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'No se pudo completar la acción');
-  return response.json();
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo completar la acción');
+    error.details = data;
+    throw error;
+  }
+  return data;
 }
 
 async function localApi(path, options = {}) {
@@ -149,6 +161,20 @@ async function localApi(path, options = {}) {
     return { ok: true, channel, health: state.network.health };
   }
   throw new Error('Ruta no encontrada');
+}
+
+function renderScanResults(networks = [], real = false) {
+  const summary = $('#scan-summary');
+  const list = $('#scan-results');
+  $('#scan-mode').textContent = real ? 'Escaneo directo del adaptador Wi-Fi' : 'Modo demostración';
+  $('#scan-count').textContent = networks.length;
+  if (!networks.length) {
+    list.innerHTML = '<div class="scan-empty"><span data-icon="info"></span><strong>No se encontraron redes cercanas</strong><small>Comprueba que el Wi-Fi esté activado en Windows y vuelve a intentarlo.</small></div>';
+    list.querySelector('[data-icon]').innerHTML = svgIcon('info');
+  } else {
+    list.innerHTML = networks.map(network => `<div class="scan-row"><div class="scan-network-icon">${svgIcon('radio')}</div><div class="scan-network-copy"><strong>${esc(network.ssid || '(red oculta)')}</strong><small>${esc(network.security || 'Seguridad no indicada')} · ${esc(network.band || 'banda desconocida')}</small></div><span class="scan-channel">Canal ${esc(network.channel ?? '—')}</span><div class="scan-signal"><span class="signal-meter"><i style="width:${Math.max(8, Number(network.signal || 0))}%"></i></span><small>${esc(network.signal ?? '—')}%</small></div></div>`).join('');
+  }
+  summary.hidden = false;
 }
 
 function showToast(message) {
@@ -213,15 +239,14 @@ async function runRepair() {
     const status = await api('/api/status');
     state.activity = status.activity;
     render();
-  } catch {
-    state.network.health = Math.min(99, state.network.health + 4);
-    state.network.ping = Math.max(14, state.network.ping - 3);
-    render();
+    $('#repair-result').hidden = false;
+    showToast(result.real ? 'Conexión local reparada' : 'Reparación de demostración completada');
+  } catch (error) {
+    $('#repair-result').hidden = true;
+    showToast(error.message);
   }
-  $('#repair-result').hidden = false;
   button.disabled = false;
   button.innerHTML = `${svgIcon('check')} Listo`;
-  showToast('Reparación inteligente completada');
 }
 
 function openChannelModal() {
@@ -245,7 +270,12 @@ async function applyChannel() {
     closeModals();
     showToast(`Canal ${selected} aplicado correctamente`);
   } catch (error) {
-    showToast(error.message);
+    if (error.details?.code === 'ROUTER_CONTROL_REQUIRED') {
+      const gateway = error.details.gateway ? ` Abre la configuración del router en http://${error.details.gateway} para aplicarlo.` : '';
+      showToast(`El canal se cambia en el router, no en Windows.${gateway}`);
+    } else {
+      showToast(error.message);
+    }
   } finally { setLoading(button, false); }
 }
 
@@ -260,9 +290,14 @@ async function scanNetwork(button) {
     const status = await api('/api/status');
     state.activity = status.activity;
     render();
-    showToast(`Escaneo completo: ${result.networksFound} redes detectadas`);
-  } catch {
-    showToast('Escaneo completado en modo local');
+    if (result.real) {
+      renderScanResults(result.networks, true);
+      openModal('scan-modal');
+    } else {
+      showToast(`Escaneo de demostración: ${result.networksFound} redes`);
+    }
+  } catch (error) {
+    showToast(error.message);
   } finally { setLoading(button, false); }
 }
 

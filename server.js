@@ -3,10 +3,14 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFile as execFileCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 
+const execFile = promisify(execFileCallback);
 const root = fileURLToPath(new URL('.', import.meta.url));
 const publicDir = join(root, 'public');
 const port = Number(process.env.PORT || 4173);
+const isWindows = process.platform === 'win32';
 
 const state = {
   mode: 'demo',
@@ -48,6 +52,117 @@ const channels = [
   { channel: 11, load: 59, networks: 5, band: '2.4 GHz' }
 ];
 
+function cleanText(value = '') {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function commandValue(output, labels) {
+  const accepted = labels.map(cleanText);
+  const line = output.split(/\r?\n/).find(item => {
+    const normalized = cleanText(item.trimStart());
+    return accepted.some(label => normalized.startsWith(`${label} :`));
+  });
+  return line ? line.slice(line.indexOf(':') + 1).trim() : '';
+}
+
+function numberValue(value) {
+  const match = String(value || '').match(/\d+(?:[.,]\d+)?/);
+  return match ? Number(match[0].replace(',', '.')) : null;
+}
+
+async function runLocalCommand(command, args, timeout = 15000) {
+  const result = await execFile(command, args, { windowsHide: true, timeout, maxBuffer: 1024 * 1024 });
+  return result.stdout || '';
+}
+
+async function getWindowsInterface() {
+  const output = await runLocalCommand('netsh', ['wlan', 'show', 'interfaces']);
+  const stateValue = commandValue(output, ['State', 'Estado']);
+  const signal = numberValue(commandValue(output, ['Signal', 'Señal']));
+  const channel = numberValue(commandValue(output, ['Channel', 'Canal']));
+  return {
+    name: commandValue(output, ['Name', 'Nombre']),
+    description: commandValue(output, ['Description', 'Descripción']),
+    state: stateValue,
+    connected: ['connected', 'conectado'].includes(cleanText(stateValue)),
+    ssid: commandValue(output, ['SSID']),
+    bssid: commandValue(output, ['BSSID']),
+    channel,
+    signal,
+    radio: commandValue(output, ['Radio type', 'Tipo de radio']),
+    receiveRate: numberValue(commandValue(output, ['Receive rate (Mbps)', 'Velocidad de recepción (Mbps)'])),
+    transmitRate: numberValue(commandValue(output, ['Transmit rate (Mbps)', 'Velocidad de transmisión (Mbps)']))
+  };
+}
+
+async function getGateway() {
+  try {
+    const output = await runLocalCommand('ipconfig', [], 8000);
+    const match = output.match(/(?:Default Gateway|Puerta de enlace predeterminada)[^:]*:\s*([0-9.]+)/i);
+    return match?.[1] || null;
+  } catch { return null; }
+}
+
+async function getPing() {
+  try {
+    const output = await runLocalCommand('ping', ['-n', '1', '-w', '1200', '1.1.1.1'], 5000);
+    const match = output.match(/(?:time|tiempo)[=<]\s*(\d+)\s*ms/i);
+    return match ? Number(match[1]) : null;
+  } catch { return null; }
+}
+
+async function getWindowsStatus() {
+  const [wifi, ping, gateway] = await Promise.all([getWindowsInterface(), getPing(), getGateway()]);
+  const health = wifi.connected ? Math.min(99, Math.max(45, Math.round((wifi.signal || 50) * 0.55 + (ping ? Math.max(0, 45 - ping / 3) : 20)))) : 18;
+  const band = wifi.channel && wifi.channel <= 14 ? '2.4 GHz' : '5 GHz';
+  state.mode = 'local';
+  state.network = {
+    ...state.network,
+    name: wifi.ssid || 'Sin conexión Wi-Fi',
+    router: wifi.description || 'Adaptador Wi-Fi',
+    channel: wifi.channel || state.network.channel,
+    band,
+    health,
+    ping: ping || 0,
+    security: 'Detectada localmente',
+    gateway,
+    adapter: wifi.name,
+    signal: wifi.signal,
+    lastScan: new Date().toISOString()
+  };
+  return { wifi, ping, gateway, network: state.network };
+}
+
+async function scanWindowsNetworks() {
+  const output = await runLocalCommand('netsh', ['wlan', 'show', 'networks', 'mode=bssid'], 20000);
+  const networks = [];
+  let current = null;
+  for (const line of output.split(/\r?\n/)) {
+    const ssid = line.match(/^\s*SSID\s+\d+\s*:\s*(.*)$/i);
+    if (ssid) {
+      if (current?.ssid) networks.push(current);
+      current = { ssid: ssid[1].trim() || '(red oculta)', signal: null, channel: null, security: null };
+      continue;
+    }
+    if (!current) continue;
+    const signal = line.match(/^\s*(?:Signal|Señal)\s*:\s*(\d+)%/i);
+    const channel = line.match(/^\s*(?:Channel|Canal)\s*:\s*(\d+)/i);
+    const security = line.match(/^\s*(?:Authentication|Autenticación)\s*:\s*(.*)$/i);
+    if (signal) current.signal = Number(signal[1]);
+    if (channel) current.channel = Number(channel[1]);
+    if (security) current.security = security[1].trim();
+  }
+  if (current?.ssid) networks.push(current);
+  return networks.map(item => ({ ...item, band: item.channel && item.channel <= 14 ? '2.4 GHz' : '5 GHz' }));
+}
+
+async function getLocalStatus() {
+  if (!isWindows) return null;
+  try { return await getWindowsStatus(); } catch (error) {
+    return { error: `No se pudo leer el adaptador Wi-Fi: ${error.message}` };
+  }
+}
+
 function json(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -73,21 +188,72 @@ function addActivity(type, title, detail) {
   state.activity = state.activity.slice(0, 5);
 }
 
-function routeApi(request, response, pathname) {
+function channelsFromScan(networks, currentChannel) {
+  const counts = new Map();
+  networks.forEach(network => {
+    if (network.channel) counts.set(network.channel, (counts.get(network.channel) || 0) + 1);
+  });
+  const knownChannels = [...new Set([...channels.map(item => item.channel), ...counts.keys(), currentChannel].filter(Boolean))];
+  return knownChannels.map(channel => ({
+    channel,
+    band: channel <= 14 ? '2.4 GHz' : '5 GHz',
+    networks: counts.get(channel) || 0,
+    load: Math.min(96, (counts.get(channel) || 0) * 18 + (channel === currentChannel ? 10 : 0)),
+    mine: channel === currentChannel
+  }));
+}
+
+async function routeApi(request, response, pathname) {
   if (request.method === 'GET' && pathname === '/api/status') {
-    return json(response, 200, { ...state, devices, channels });
+    const local = await getLocalStatus();
+    if (local?.network) state.network = local.network;
+    return json(response, 200, {
+      ...state,
+      devices: isWindows ? [] : devices,
+      channels: state.channels || channels,
+      local: local || null,
+      platform: process.platform,
+      real: Boolean(local?.network)
+    });
   }
 
   if (request.method === 'POST' && pathname === '/api/scan') {
+    if (isWindows) {
+      try {
+        const networks = await scanWindowsNetworks();
+        const local = await getLocalStatus();
+        if (local?.network) state.network = local.network;
+        state.network.lastScan = new Date().toISOString();
+        const scannedChannels = channelsFromScan(networks, state.network.channel);
+        state.channels = scannedChannels;
+        addActivity('success', 'Escaneo Wi-Fi local', `${networks.length} redes cercanas detectadas`);
+        return json(response, 200, {
+          ok: true,
+          real: true,
+          message: 'Escaneo Wi-Fi local completado',
+          scannedAt: state.network.lastScan,
+          networksFound: networks.length,
+          networks,
+          health: state.network.health,
+          ping: state.network.ping,
+          channels: scannedChannels
+        });
+      } catch (error) {
+        return json(response, 500, { ok: false, real: true, error: `Windows no pudo escanear el Wi-Fi: ${error.message}` });
+      }
+    }
+
     state.network.lastScan = new Date().toISOString();
     state.network.health = 94;
     state.network.ping = 22;
     addActivity('success', 'Escaneo completado', 'No se encontraron interferencias críticas');
     return json(response, 200, {
       ok: true,
-      message: 'Escaneo completado',
+      real: false,
+      message: 'Escaneo de demostración completado',
       scannedAt: state.network.lastScan,
       networksFound: 8,
+      networks: [],
       health: state.network.health,
       ping: state.network.ping,
       channels
@@ -95,27 +261,52 @@ function routeApi(request, response, pathname) {
   }
 
   if (request.method === 'POST' && pathname === '/api/repair') {
-    return body(request).then(payload => {
+    return body(request).then(async payload => {
       const action = payload.action || 'smart';
       const messages = {
-        smart: ['Diagnóstico terminado', 'Se optimizó el canal y se renovó la conexión'],
+        smart: ['Conexión reparada', 'Se vació el DNS y se renovó la dirección IP'],
         dns: ['DNS renovado', 'La resolución de nombres vuelve a responder correctamente'],
-        restart: ['Conexión reiniciada', 'El adaptador ya está conectado de nuevo'],
-        interference: ['Interferencias reducidas', 'Se eligió el canal menos congestionado']
+        restart: ['Conexión comprobada', 'El adaptador Wi-Fi fue revisado'],
+        interference: ['Interferencias analizadas', 'El escaneo local quedó actualizado']
       };
       const [title, detail] = messages[action] || messages.smart;
+
+      if (isWindows) {
+        try {
+          // Estas acciones actúan sobre el equipo local. No cambian la configuración del router.
+          await runLocalCommand('ipconfig', ['flushdns'], 10000);
+          if (action === 'smart') await runLocalCommand('ipconfig', ['renew'], 20000);
+          const local = await getLocalStatus();
+          if (local?.network) state.network = local.network;
+          addActivity('success', title, detail);
+          return json(response, 200, { ok: true, real: true, title, detail, health: state.network.health, ping: state.network.ping });
+        } catch (error) {
+          return json(response, 500, { ok: false, real: true, error: `No se pudo reparar la conexión: ${error.message}` });
+        }
+      }
+
       state.network.health = Math.min(99, state.network.health + 4);
       state.network.ping = Math.max(14, state.network.ping - 3);
       addActivity('success', title, detail);
-      return json(response, 200, { ok: true, title, detail, health: state.network.health, ping: state.network.ping });
+      return json(response, 200, { ok: true, real: false, title, detail, health: state.network.health, ping: state.network.ping });
     }).catch(error => json(response, 400, { ok: false, error: error.message }));
   }
 
   if (request.method === 'POST' && pathname === '/api/channel') {
-    return body(request).then(payload => {
+    return body(request).then(async payload => {
       const channel = Number(payload.channel);
-      const candidate = channels.find(item => item.channel === channel);
+      const candidate = (state.channels || channels).find(item => item.channel === channel);
       if (!candidate || candidate.band !== '5 GHz') return json(response, 400, { ok: false, error: 'Canal no disponible' });
+      if (isWindows) {
+        const gateway = await getGateway();
+        return json(response, 409, {
+          ok: false,
+          real: true,
+          code: 'ROUTER_CONTROL_REQUIRED',
+          gateway,
+          error: 'El canal lo controla el router. Windows puede analizar tu Wi-Fi, pero no cambiar el canal del punto de acceso sin la API y las credenciales del router.'
+        });
+      }
       state.network.channel = channel;
       state.network.health = Math.min(99, state.network.health + 2);
       addActivity('info', 'Canal optimizado', `Cambio a canal ${channel} aplicado`);

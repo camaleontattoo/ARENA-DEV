@@ -19,7 +19,7 @@
 
         <div class="network-select" role="button" tabindex="0" aria-label="Red seleccionada">
           <div class="network-icon"><span></span></div>
-          <div class="network-copy"><span>Red doméstica</span><strong>Casa de Willian</strong></div>
+          <div class="network-copy"><span>Red doméstica</span><strong id="network-name">Casa de Willian</strong></div>
           <span class="chevron">⌄</span>
         </div>
 
@@ -118,6 +118,16 @@
       <button class="modal-close" data-close-modal aria-label="Cerrar">×</button><div class="modal-icon channel-modal-icon"><span data-icon="radio"></span></div><span class="section-kicker">OPTIMIZACIÓN MANUAL</span><h2 id="channel-title">Elige el mejor canal</h2><p class="modal-intro">Un canal despejado puede mejorar la estabilidad. Nexo recomienda el canal <strong>44</strong>.</p>
       <div class="channel-options" id="channel-options"><label class="channel-option recommended"><input type="radio" name="channel" value="44" checked /><span class="radio-ui"></span><span><strong>Canal 44</strong><small>Muy despejado · recomendado</small></span><em>18% uso</em><b>MEJOR</b></label><label class="channel-option"><input type="radio" name="channel" value="36" /><span class="radio-ui"></span><span><strong>Canal 36</strong><small>Despejado</small></span><em>24% uso</em></label><label class="channel-option"><input type="radio" name="channel" value="48" /><span class="radio-ui"></span><span><strong>Canal 48</strong><small>Estable</small></span><em>31% uso</em></label></div>
       <div class="modal-actions"><button class="outline-button" data-close-modal>Cancelar</button><button class="primary-button" id="apply-channel"><span data-icon="check"></span> Aplicar canal</button></div>
+    </section>
+
+    <section class="modal scan-modal" id="scan-modal" role="dialog" aria-modal="true" aria-labelledby="scan-title" hidden>
+      <button class="modal-close" data-close-modal aria-label="Cerrar">×</button>
+      <div class="modal-icon scan-modal-icon"><span data-icon="radar"></span></div>
+      <span class="section-kicker">ESCANEO LOCAL</span>
+      <h2 id="scan-title">Redes Wi-Fi a tu alrededor</h2>
+      <p class="modal-intro"><span id="scan-mode">Escaneo directo del adaptador Wi-Fi</span>. Se encontraron <strong id="scan-count">0</strong> redes cercanas.</p>
+      <div class="scan-results" id="scan-results"></div>
+      <div class="modal-actions"><button class="primary-button" data-close-modal><span data-icon="check"></span> Entendido</button></div>
     </section>
 
     <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-mark">✓</span><span id="toast-message">Listo</span></div>
