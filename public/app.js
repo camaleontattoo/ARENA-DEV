@@ -72,6 +72,7 @@ function renderHealth() {
   $('.health-ring').style.background = `conic-gradient(var(--cyan) 0deg ${health * 3.6}deg, #18313f ${health * 3.6}deg 360deg)`;
   $('#ping-value').textContent = ping;
   $('#network-name').textContent = state.network.name || 'Sin conexión Wi-Fi';
+  $('#network-type').textContent = state.network.gateway ? `${state.network.routerVendor || 'Router'} · ${state.network.gateway}` : 'Red doméstica';
   $('#current-channel').textContent = state.network.channel;
   $('#footer-time').textContent = state.network.lastScan ? formatLastScan(state.network.lastScan) : 'hace 2 min';
 }
@@ -134,7 +135,9 @@ async function api(path, options = {}) {
   // También soporta abrir public/index.html directamente como archivo estático.
   if (window.location.protocol === 'file:') return localApi(path, options);
   let lastError;
-  for (const base of apiBases()) {
+  let demoFallback;
+  const bases = apiBases();
+  for (const base of bases) {
     try {
       const response = await fetch(`${base}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
       const data = await response.json().catch(() => ({}));
@@ -143,11 +146,17 @@ async function api(path, options = {}) {
         error.details = data;
         error.status = response.status;
         // Si encontramos otro servidor en 4173/4174, probamos el siguiente.
-        if ((response.status === 404 || response.status === 405) && base !== apiBases().at(-1)) {
+        if ((response.status === 404 || response.status === 405) && base !== bases.at(-1)) {
           lastError = error;
           continue;
         }
         throw error;
+      }
+      // Si 4173 responde con una demo antigua y 4174 tiene el agente local,
+      // preferimos el resultado real. Si 4174 no existe, conservamos la demo.
+      if (data.real === false && base !== bases.at(-1)) {
+        demoFallback = data;
+        continue;
       }
       return data;
     } catch (error) {
@@ -155,6 +164,7 @@ async function api(path, options = {}) {
       if (error.details && error.status !== 404 && error.status !== 405) throw error;
     }
   }
+  if (demoFallback) return demoFallback;
   throw lastError || new Error(`No se pudo conectar con NexoWiFi. Comprueba que npm start siga ejecutándose.`);
 }
 
