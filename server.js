@@ -115,6 +115,15 @@ async function getGateway() {
   } catch { return null; }
 }
 
+async function getRouterMac(gateway) {
+  if (!gateway) return null;
+  try {
+    const output = await runLocalCommand('arp', ['-a', gateway], 8000);
+    const match = output.match(/([0-9a-f]{2}(?:[-:][0-9a-f]{2}){5})/i);
+    return match?.[1] || null;
+  } catch { return null; }
+}
+
 async function getPing() {
   try {
     const output = await runLocalCommand('ping', ['-n', '1', '-w', '1200', '1.1.1.1'], 5000);
@@ -125,19 +134,23 @@ async function getPing() {
 
 async function getWindowsStatus() {
   const [wifi, ping, gateway] = await Promise.all([getWindowsInterface(), getPing(), getGateway()]);
+  const routerMac = await getRouterMac(gateway);
   const health = wifi.connected ? Math.min(99, Math.max(45, Math.round((wifi.signal || 50) * 0.55 + (ping ? Math.max(0, 45 - ping / 3) : 20)))) : 18;
   const band = wifi.channel && wifi.channel <= 14 ? '2.4 GHz' : '5 GHz';
   state.mode = 'local';
   state.network = {
     ...state.network,
     name: wifi.ssid || 'Sin conexión Wi-Fi',
-    router: wifi.description || 'Adaptador Wi-Fi',
+    router: gateway ? `Router detectado en ${gateway}` : (wifi.description || 'Adaptador Wi-Fi'),
     channel: wifi.channel || state.network.channel,
     band,
     health,
     ping: ping || 0,
     security: 'Detectada localmente',
     gateway,
+    adminUrl: gateway ? `http://${gateway}` : null,
+    routerMac,
+    bssid: wifi.bssid,
     adapter: wifi.name,
     signal: wifi.signal,
     lastScan: new Date().toISOString()
@@ -327,11 +340,14 @@ async function routeApi(request, response, pathname) {
       if (!candidate || candidate.band !== '5 GHz') return json(response, 400, { ok: false, error: 'Canal no disponible' });
       if (isWindows) {
         const gateway = await getGateway();
+        const routerMac = await getRouterMac(gateway);
         return json(response, 409, {
           ok: false,
           real: true,
           code: 'ROUTER_CONTROL_REQUIRED',
           gateway,
+          routerMac,
+          adminUrl: gateway ? `http://${gateway}` : null,
           error: 'El canal lo controla el router. Windows puede analizar tu Wi-Fi, pero no cambiar el canal del punto de acceso sin la API y las credenciales del router.'
         });
       }

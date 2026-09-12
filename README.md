@@ -31,7 +31,7 @@ En Linux, macOS o el preview remoto se mantiene el modo demo porque esos comando
 
 ## Sobre cambiar el canal
 
-El **canal del punto de acceso lo controla el router**, no el adaptador Wi‑Fi de Windows. Por seguridad no existe un comando universal que pueda cambiarlo en cualquier marca de router. NexoWiFi detecta el gateway y, al intentar aplicarlo, explica que debes abrir la configuración del router en esa dirección.
+El **canal del punto de acceso lo controla el router**, no el adaptador Wi‑Fi de Windows. Por seguridad no existe un comando universal que pueda cambiarlo en cualquier marca de router. NexoWiFi detecta automáticamente el gateway y la MAC del router mediante `ipconfig` y `arp`, y muestra un enlace para abrir su panel de administración.
 
 Para automatizar también esa parte hace falta conocer la marca/modelo del router y conectar una API autenticada específica, por ejemplo TP-Link, ASUS, MikroTik, UniFi o la API del operador. No se deben enviar credenciales del router a un endpoint genérico.
 

@@ -13,6 +13,7 @@ const iconPaths = {
   spark: '<path d="m12 2 1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2ZM19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16Z"/>',
   wand: '<path d="m15 4 5 5M4 20l9.5-9.5M12 6l1 2.5L15.5 10 13 11l-1 2.5-1-2.5-2.5-1L11 8.5 12 6ZM19 14l.6 1.4L21 16l-1.4.6L19 18l-.6-1.4L17 16l1.4-.6L19 14Z"/>',
   radio: '<circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/>',
+  router: '<path d="M4 9h16v9H4zM7 9l2-4h6l2 4M8 13h.01M12 13h.01M16 13h.01M8 16h8"/>',
   lightbulb: '<path d="M9 18h6M10 22h4M8 14.5a6 6 0 1 1 8 0c-.8.7-1 1.2-1 2.5H9c0-1.3-.2-1.8-1-2.5Z"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
   laptop: '<rect x="4" y="4" width="16" height="12" rx="1.5"/><path d="M2 19h20M9 19l1-3h4l1 3"/>',
@@ -272,8 +273,26 @@ async function runRepair() {
   button.innerHTML = `${svgIcon('check')} Listo`;
 }
 
+function renderRouterDiscovery(info = state.network) {
+  const detail = $('#router-discovery-detail');
+  const link = $('#router-admin-link');
+  const title = $('#router-discovery strong');
+  if (!detail || !link || !title) return;
+  if (info?.gateway) {
+    title.textContent = 'Router detectado';
+    detail.textContent = `Gateway ${info.gateway}${info.routerMac ? ` · MAC ${info.routerMac}` : ''}`;
+    link.href = info.adminUrl || `http://${info.gateway}`;
+    link.hidden = false;
+  } else {
+    title.textContent = 'No se encontró el gateway';
+    detail.textContent = 'Comprueba que el equipo esté conectado a una red Wi-Fi.';
+    link.hidden = true;
+  }
+}
+
 function openChannelModal() {
   closeModals();
+  renderRouterDiscovery();
   const options = state.channels.filter(item => item.band === '5 GHz').sort((a, b) => a.load - b.load).slice(0, 3);
   $('#channel-options').innerHTML = options.map((item, index) => `<label class="channel-option ${index === 0 ? 'recommended' : ''}"><input type="radio" name="channel" value="${item.channel}" ${item.channel === state.network.channel || (index === 0 && !options.some(option => option.channel === state.network.channel)) ? 'checked' : ''} /><span class="radio-ui"></span><span><strong>Canal ${item.channel}</strong><small>${index === 0 ? 'Muy despejado · recomendado' : item.load < 40 ? 'Despejado' : 'Estable'}</small></span><em>${item.load}% uso</em>${index === 0 ? '<b>MEJOR</b>' : ''}</label>`).join('');
   openModal('channel-modal');
@@ -294,7 +313,8 @@ async function applyChannel() {
     showToast(`Canal ${selected} aplicado correctamente`);
   } catch (error) {
     if (error.details?.code === 'ROUTER_CONTROL_REQUIRED') {
-      const gateway = error.details.gateway ? ` Abre la configuración del router en http://${error.details.gateway} para aplicarlo.` : '';
+      renderRouterDiscovery({ gateway: error.details.gateway, routerMac: error.details.routerMac, adminUrl: error.details.adminUrl });
+      const gateway = error.details.gateway ? ` Router detectado en ${error.details.gateway}.` : '';
       showToast(`El canal se cambia en el router, no en Windows.${gateway}`);
     } else {
       showToast(error.message);
