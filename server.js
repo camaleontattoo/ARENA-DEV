@@ -145,7 +145,28 @@ const server = http.createServer((request, response) => {
   return serveStatic(request, response, url.pathname);
 });
 
-server.listen(port, '0.0.0.0', () => {
-  console.log(`NexoWiFi listo en http://0.0.0.0:${port}`);
-  console.log('Modo demo: las acciones se simulan de forma segura en este entorno.');
-});
+function startServer(listenPort) {
+  const onError = error => {
+    if (error.code === 'EADDRINUSE' && !process.env.PORT && listenPort < 65000) {
+      server.removeListener('error', onError);
+      console.warn(`El puerto ${listenPort} está ocupado. Probando el puerto ${listenPort + 1}...`);
+      startServer(listenPort + 1);
+      return;
+    }
+
+    if (error.code === 'EADDRINUSE') {
+      console.error(`El puerto ${listenPort} ya está en uso. Cierra el proceso que lo ocupa o inicia con PORT=4174 npm start.`);
+    } else {
+      console.error(error);
+    }
+    process.exit(1);
+  };
+
+  server.once('error', onError);
+  server.listen(listenPort, '0.0.0.0', () => {
+    console.log(`NexoWiFi listo en http://localhost:${listenPort}`);
+    console.log('Modo demo: las acciones se simulan de forma segura en este entorno.');
+  });
+}
+
+startServer(port);
